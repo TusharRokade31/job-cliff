@@ -2,24 +2,31 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getJobById, applyToJob, saveJob, unsaveJob, getSaveStatus } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import JobCard from "../components/JobCard";
 
 export default function JobDetails() {
-  const { jobId }   = useParams();
-  const navigate    = useNavigate();
+  const { jobId } = useParams();
+  const navigate  = useNavigate();
   const { isLoggedIn, userType } = useAuth();
 
-  const [job,       setJob]       = useState(null);
-  const [loading,   setLoading]   = useState(true);
-  const [saved,     setSaved]     = useState(false);
-  const [applying,  setApplying]  = useState(false);
-  const [applied,   setApplied]   = useState(false);
-  const [msg,       setMsg]       = useState(null); // { type: "success"|"error", text }
+  const [job,        setJob]        = useState(null);
+  const [similar,    setSimilar]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [saved,      setSaved]      = useState(false);
+  const [applying,   setApplying]   = useState(false);
+  const [applied,    setApplied]    = useState(false);
+  const [msg,        setMsg]        = useState(null);
+  const [logoErr,    setLogoErr]    = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
         const { data } = await getJobById(jobId);
-        setJob(data?.data || data?.job || data);
+        // Handle both response shapes
+        const jobData  = data?.job  || data?.data?.job  || data?.data || data;
+        const simJobs  = data?.similarJobs || data?.data?.similarJobs || [];
+        setJob(jobData);
+        setSimilar(simJobs);
       } catch { setJob(null); }
       setLoading(false);
     })();
@@ -54,199 +61,272 @@ export default function JobDetails() {
     } catch {}
   };
 
-  if (loading) return <div className="page-loader"><div className="spinner" /></div>;
-  if (!job)    return (
-    <div className="page-loader">
-      <h3 style={{ color: "var(--text-secondary)" }}>Job not found</h3>
-      <Link to="/jobs" className="btn btn-primary" style={{ marginTop: 16 }}>Back to Jobs</Link>
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center min-h-96 gap-4 text-gray-400">
+      <div className="spinner" />
+      <p className="text-sm">Loading job details…</p>
     </div>
   );
 
-  const title    = job.title || job.job_title || "Untitled";
-  const company  = job.company_name || job.employer_name || "Company";
-  const location = job.job_location || job.location || "—";
-  const type     = job.job_type || job.employment_type || "Full-time";
-  const salary   = job.salary_range || job.salary || null;
-  const skills   = Array.isArray(job.skills) ? job.skills : [];
-  const desc     = job.description || job.job_description || "";
-  const resp     = Array.isArray(job.responsibilities) ? job.responsibilities : [];
-  const req      = Array.isArray(job.requirements)     ? job.requirements     : [];
-  const perks    = Array.isArray(job.perks)            ? job.perks            : [];
-  const logo     = job.company_logo || job.logo || null;
-  const posted   = job.created_at ? new Date(job.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "";
+  if (!job) return (
+    <div className="flex flex-col items-center justify-center min-h-96 gap-4">
+      <h3 className="font-display font-bold text-xl text-gray-500">Job not found</h3>
+      <Link to="/jobs" className="bg-brand-green text-white font-bold px-6 py-2.5 rounded-xl hover:bg-green-700 transition-all">
+        Back to Jobs
+      </Link>
+    </div>
+  );
+
+  // ── Field mapping for actual API response ────────────
+  const title      = job.title    || job.job_title    || "Untitled";
+  const company    = job.company  || job.employer?.organization_name || job.company_name || job.employer_name || "Company";
+  const location   = job.job_location || job.location || "—";
+  const type       = job.job_type || job.employment_type || "Full-time";
+  const salary     = job.salary_range || job.salary || null;
+  const experience = job.min_experience != null ? `${job.min_experience}+ yrs` : null;
+  const openings   = job.openings ?? null;
+  const duration   = job.duration || null;
+  const applyBy    = job.apply_by ? new Date(job.apply_by).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : null;
+  const posted     = job.created_at ? new Date(job.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "";
+  const logo       = job.employer?.logo_url || job.company_logo || job.logo || null;
+
+  // HTML content from API
+  const aboutJob      = job.about_job       || job.description     || job.job_description || "";
+  const whoCanApply   = job.who_can_apply   || "";
+  const duties        = job.assessment_questions || "";
+  const orgDesc       = job.employer?.organization_description || "";
+
+  // Skill / perk / certificate arrays
+  const skills       = Array.isArray(job.jobSkills)       ? job.jobSkills.map(s => s.skill_name)           : Array.isArray(job.skills)   ? job.skills   : [];
+  const perks        = Array.isArray(job.jobPerks)        ? job.jobPerks.map(p => p.perk_name)             : Array.isArray(job.perks)    ? job.perks    : [];
+  const certs        = Array.isArray(job.jobCertificates) ? job.jobCertificates.map(c => c.certificate_name): [];
+
+  const employer     = job.employer || {};
+  const empCity      = employer.organization_city || employer.city || "";
+  const empAddress   = employer.address || "";
 
   return (
-    <main style={{ padding: "40px 0 80px" }}>
-      <div className="container">
-        {/* Breadcrumb */}
-        <div style={styles.crumb}>
-          <Link to="/"    style={styles.crumbLink}>Home</Link> /
-          <Link to="/jobs" style={styles.crumbLink}>Jobs</Link> /
-          <span style={{ color: "var(--text-muted)" }}>{title}</span>
-        </div>
+    <main className="py-10 pb-20 bg-gray-50 min-h-screen">
+      <div className="max-w-6xl mx-auto px-6">
 
-        <div style={styles.layout}>
-          {/* ── Main Content ────────────────────────────── */}
-          <article style={styles.main}>
-            {/* Job header */}
-            <div style={styles.jobHeader}>
-              <div style={styles.logoWrap}>
-                {logo
-                  ? <img src={logo} alt={company} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  : <span style={styles.logoFallback}>{company[0]}</span>
-                }
-              </div>
-              <div style={{ flex: 1 }}>
-                <h1 style={styles.jobTitle}>{title}</h1>
-                <p  style={styles.jobCompany}>{company}</p>
-                <div style={styles.metaRow}>
-                  <span style={styles.metaChip}>📍 {location}</span>
-                  <span style={styles.metaChip}>⏱ {type}</span>
-                  {salary && <span style={styles.metaChip}>💰 {salary}</span>}
-                  {posted && <span style={styles.metaChip}>🗓 {posted}</span>}
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-xs text-gray-400 mb-6">
+          <Link to="/" className="hover:text-navy-700 transition-colors">Home</Link>
+          <span>/</span>
+          <Link to="/jobs" className="hover:text-navy-700 transition-colors">Jobs</Link>
+          <span>/</span>
+          <span className="text-gray-500">{title}</span>
+        </nav>
+
+        <div className="flex gap-8 items-start">
+          {/* ── Main Content ───────────────────────── */}
+          <article className="flex-1 min-w-0 flex flex-col gap-6">
+
+            {/* Job Header Card */}
+            <div className="bg-white rounded-2xl border border-blue-100 shadow-card p-6">
+              <div className="flex gap-5 items-start">
+                {/* Logo */}
+                <div className="w-16 h-16 rounded-2xl bg-brand-navy-lt border border-blue-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+                  {logo && !logoErr
+                    ? <img src={logo} alt={company} className="w-full h-full object-cover"
+                        onError={() => setLogoErr(true)} />
+                    : <span className="font-display font-extrabold text-2xl text-navy-700">{company[0]?.toUpperCase()}</span>
+                  }
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <h1 className="font-display font-extrabold text-2xl text-navy-700 leading-snug">{title}</h1>
+                  <p className="text-gray-500 text-base mt-1 font-medium">{company}</p>
+                  {empCity && <p className="text-xs text-gray-400 mt-0.5">📍 {empCity}</p>}
+
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    <MetaChip>⏱ {type}</MetaChip>
+                    <MetaChip>📍 {location}</MetaChip>
+                    {salary    && <MetaChip>💰 {salary}</MetaChip>}
+                    {posted    && <MetaChip>🗓 {posted}</MetaChip>}
+                    {experience && <MetaChip>🎓 {experience} experience</MetaChip>}
+                    {openings != null && <MetaChip>👥 {openings} opening{openings !== 1 ? "s" : ""}</MetaChip>}
+                    {duration  && <MetaChip>📋 {duration}</MetaChip>}
+                    {applyBy   && <MetaChip className="border-amber-200 text-amber-700 bg-amber-50">⏰ Apply by {applyBy}</MetaChip>}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Alert message */}
+            {/* Alert Message */}
             {msg && (
-              <div style={{ ...styles.alert, background: msg.type === "success" ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", borderColor: msg.type === "success" ? "#34d399" : "#f87171", color: msg.type === "success" ? "#34d399" : "#f87171" }}>
+              <div className={`rounded-xl border px-4 py-3 text-sm font-medium ${
+                msg.type === "success"
+                  ? "bg-green-50 border-green-200 text-green-700"
+                  : "bg-red-50 border-red-200 text-red-700"
+              }`}>
                 {msg.text}
               </div>
             )}
 
-            {/* Description */}
-            {desc && (
-              <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>About this Role</h2>
-                <p style={styles.bodyText}>{desc}</p>
-              </section>
+            {/* About the Job */}
+            {aboutJob && (
+              <Section title="About this Role">
+                <div className="rich-text" dangerouslySetInnerHTML={{ __html: aboutJob }} />
+              </Section>
             )}
 
-            {/* Responsibilities */}
-            {resp.length > 0 && (
-              <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Responsibilities</h2>
-                <ul style={styles.list}>
-                  {resp.map((r, i) => <li key={i} style={styles.listItem}>{r}</li>)}
-                </ul>
-              </section>
+            {/* Who Can Apply */}
+            {whoCanApply && (
+              <Section title="Who Can Apply">
+                <div className="rich-text" dangerouslySetInnerHTML={{ __html: whoCanApply }} />
+              </Section>
             )}
 
-            {/* Requirements */}
-            {req.length > 0 && (
-              <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Requirements</h2>
-                <ul style={styles.list}>
-                  {req.map((r, i) => <li key={i} style={styles.listItem}>{r}</li>)}
-                </ul>
-              </section>
+            {/* Key Responsibilities / Duties */}
+            {duties && (
+              <Section title="Key Responsibilities">
+                <div className="rich-text" dangerouslySetInnerHTML={{ __html: duties }} />
+              </Section>
             )}
 
             {/* Skills */}
             {skills.length > 0 && (
-              <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Skills Required</h2>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Section title="Skills Required">
+                <div className="flex flex-wrap gap-2">
                   {skills.map((s) => (
-                    <span key={s} style={styles.skillTag}>{s}</span>
+                    <span key={s} className="text-sm text-brand-green bg-brand-green-lt border border-brand-green-md rounded-full px-3.5 py-1 font-medium">
+                      {s}
+                    </span>
                   ))}
                 </div>
-              </section>
+              </Section>
+            )}
+
+            {/* Certificates */}
+            {certs.length > 0 && (
+              <Section title="Preferred Certificates">
+                <div className="flex flex-wrap gap-2">
+                  {certs.map((c) => (
+                    <span key={c} className="text-sm text-navy-600 bg-brand-navy-lt border border-blue-100 rounded-full px-3.5 py-1 font-medium">
+                      🎓 {c}
+                    </span>
+                  ))}
+                </div>
+              </Section>
             )}
 
             {/* Perks */}
             {perks.length > 0 && (
-              <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Perks & Benefits</h2>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <Section title="Perks & Benefits">
+                <div className="flex flex-wrap gap-2">
                   {perks.map((p) => (
-                    <span key={p} style={{ ...styles.skillTag, background: "var(--accent-2-dim)", color: "#a78bfa", borderColor: "rgba(124,58,237,0.2)" }}>{p}</span>
+                    <span key={p} className="text-sm text-purple-700 bg-purple-50 border border-purple-100 rounded-full px-3.5 py-1 font-medium">
+                      ✨ {p}
+                    </span>
                   ))}
                 </div>
-              </section>
+              </Section>
             )}
+
+            {/* About the Company */}
+            {(orgDesc || empAddress) && (
+              <Section title={`About ${company}`}>
+                {orgDesc && <div className="rich-text" dangerouslySetInnerHTML={{ __html: orgDesc }} />}
+                {empAddress && (
+                  <p className="text-sm text-gray-500 mt-3 flex items-start gap-2">
+                    <span>📍</span><span>{empAddress}</span>
+                  </p>
+                )}
+              </Section>
+            )}
+
           </article>
 
-          {/* ── Sticky Sidebar CTA ──────────────────────── */}
-          <aside style={styles.sidebar}>
-            <div style={styles.ctaCard}>
-              <p style={styles.ctaTitle}>Interested in this role?</p>
-              <p style={{ fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: 20 }}>
+          {/* ── Sticky Sidebar ──────────────────────── */}
+          <aside className="w-72 flex-shrink-0 sticky top-20 flex flex-col gap-4">
+
+            {/* CTA Card */}
+            <div className="bg-white rounded-2xl border border-blue-100 shadow-card p-6 flex flex-col gap-3">
+              <h3 className="font-display font-bold text-navy-700 text-lg">Interested in this role?</h3>
+              <p className="text-xs text-gray-400">
                 {isLoggedIn ? "Submit your application in one click." : "Login to apply to this job."}
               </p>
 
               <button
-                className="btn btn-primary"
                 onClick={handleApply}
                 disabled={applying || applied}
-                style={{ width: "100%", justifyContent: "center", fontSize: "0.95rem", padding: "12px" }}
-              >
+                className="w-full bg-brand-green text-white font-display font-bold py-3 rounded-xl hover:bg-green-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
                 {applied ? "✓ Applied" : applying ? "Submitting…" : "Apply Now"}
               </button>
 
               <button
-                className="btn btn-outline"
                 onClick={handleSave}
-                style={{ width: "100%", justifyContent: "center", marginTop: 10, color: saved ? "var(--accent)" : undefined }}
-              >
+                className={`w-full border font-display font-bold py-2.5 rounded-xl transition-all text-sm ${
+                  saved
+                    ? "border-red-200 text-red-500 bg-red-50 hover:bg-red-100"
+                    : "border-blue-100 text-gray-600 bg-white hover:bg-blue-50"
+                }`}>
                 {saved ? "♥ Saved" : "♡ Save Job"}
               </button>
 
               {!isLoggedIn && (
-                <p style={{ fontSize: "0.78rem", color: "var(--text-muted)", textAlign: "center", marginTop: 12 }}>
-                  <Link to="/login" style={{ color: "var(--accent)" }}>Login</Link> to apply or save this job.
+                <p className="text-xs text-gray-400 text-center">
+                  <Link to="/login" className="text-brand-green font-semibold hover:underline">Login</Link> to apply or save this job.
                 </p>
               )}
             </div>
 
-            {/* Job summary card */}
-            <div style={styles.summaryCard}>
-              <p style={styles.summaryTitle}>Job Summary</p>
-              {[
-                ["Job Type",    type],
-                ["Location",    location],
-                ["Salary",      salary || "Not disclosed"],
-                ["Posted",      posted  || "—"],
-              ].map(([label, value]) => (
-                <div key={label} style={styles.summaryRow}>
-                  <span style={styles.summaryLabel}>{label}</span>
-                  <span style={styles.summaryValue}>{value}</span>
-                </div>
-              ))}
+            {/* Job Summary */}
+            <div className="bg-white rounded-2xl border border-blue-100 shadow-card p-5">
+              <h4 className="font-display font-bold text-navy-700 text-sm mb-4">Job Summary</h4>
+              <div className="flex flex-col divide-y divide-blue-50">
+                {[
+                  ["Job Type",    type],
+                  ["Location",    location],
+                  ["Salary",      salary || "Not disclosed"],
+                  ["Experience",  experience || "Any"],
+                  ["Openings",    openings != null ? `${openings} position${openings !== 1 ? "s" : ""}` : "—"],
+                  ["Duration",    duration || "—"],
+                  ["Posted",      posted  || "—"],
+                  ["Apply By",    applyBy || "Open"],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex justify-between items-start py-2.5">
+                    <span className="text-xs text-gray-400">{label}</span>
+                    <span className="text-xs text-navy-700 font-semibold text-right max-w-36">{value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+
           </aside>
         </div>
+
+        {/* Similar Jobs */}
+        {similar.length > 0 && (
+          <section className="mt-14">
+            <h2 className="font-display font-bold text-2xl text-navy-700 mb-6">Similar Jobs</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {similar.slice(0, 4).map((job) => (
+                <JobCard key={job.id || job._id} job={job} />
+              ))}
+            </div>
+          </section>
+        )}
+
       </div>
     </main>
   );
 }
 
-const styles = {
-  crumb:     { display: "flex", gap: 8, alignItems: "center", fontSize: "0.82rem", color: "var(--text-muted)", marginBottom: 28 },
-  crumbLink: { color: "var(--text-secondary)", transition: "var(--transition)" },
-  layout:    { display: "flex", gap: 32, alignItems: "flex-start" },
-  main:      { flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 0 },
-  jobHeader: { display: "flex", gap: 20, alignItems: "flex-start", background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 28, marginBottom: 28 },
-  logoWrap:  { width: 64, height: 64, borderRadius: "var(--radius-md)", background: "var(--bg-elevated)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, overflow: "hidden" },
-  logoFallback: { fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.4rem", color: "var(--accent)" },
-  jobTitle:  { fontFamily: "var(--font-display)", fontSize: "1.6rem", fontWeight: 800, lineHeight: 1.2 },
-  jobCompany:{ fontSize: "1rem", color: "var(--text-secondary)", marginTop: 4 },
-  metaRow:   { display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12 },
-  metaChip:  { fontSize: "0.78rem", color: "var(--text-secondary)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 99, padding: "4px 12px" },
-  alert:     { border: "1px solid", borderRadius: "var(--radius-sm)", padding: "12px 16px", fontSize: "0.875rem", marginBottom: 24 },
-  section:   { borderTop: "1px solid var(--border)", paddingTop: 28, paddingBottom: 28 },
-  sectionTitle: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.05rem", marginBottom: 16 },
-  bodyText:  { fontSize: "0.9rem", color: "var(--text-secondary)", lineHeight: 1.8, whiteSpace: "pre-line" },
-  list:      { paddingLeft: 20, display: "flex", flexDirection: "column", gap: 10 },
-  listItem:  { fontSize: "0.9rem", color: "var(--text-secondary)", lineHeight: 1.6 },
-  skillTag:  { display: "inline-block", padding: "5px 14px", background: "var(--accent-dim)", color: "var(--accent)", border: "1px solid rgba(255,107,53,0.2)", borderRadius: 99, fontSize: "0.8rem", fontWeight: 500 },
-  sidebar:   { width: 280, flexShrink: 0, position: "sticky", top: 80, display: "flex", flexDirection: "column", gap: 16 },
-  ctaCard:   { background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 24 },
-  ctaTitle:  { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.1rem", marginBottom: 6 },
-  summaryCard:{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: 20 },
-  summaryTitle:{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "0.9rem", marginBottom: 14 },
-  summaryRow:{ display: "flex", justifyContent: "space-between", padding: "8px 0", borderBottom: "1px solid var(--border)" },
-  summaryLabel:{ fontSize: "0.78rem", color: "var(--text-muted)" },
-  summaryValue:{ fontSize: "0.82rem", color: "var(--text-primary)", fontWeight: 500, textAlign: "right", maxWidth: "60%" },
-};
+function Section({ title, children }) {
+  return (
+    <div className="bg-white rounded-2xl border border-blue-100 shadow-card p-6">
+      <h2 className="font-display font-bold text-navy-700 text-base mb-4 pb-3 border-b border-blue-50">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function MetaChip({ children, className = "" }) {
+  return (
+    <span className={`text-xs text-gray-600 bg-blue-50 border border-blue-100 rounded-full px-3 py-1 ${className}`}>
+      {children}
+    </span>
+  );
+} 

@@ -3,19 +3,18 @@ import { useSearchParams } from "react-router-dom";
 import { getJobs } from "../services/api";
 import JobCard from "../components/JobCard";
 
-const JOB_TYPES     = ["Full-time", "Part-time", "Contract", "Internship", "Remote"];
-const EXPERIENCE    = ["Fresher", "1-3 years", "3-5 years", "5+ years"];
+const JOB_TYPES  = ["Full-time", "Part-time", "Contract", "Internship", "Remote"];
+const EXPERIENCE = ["Fresher", "1-3 years", "3-5 years", "5+ years"];
 
 export default function JobListing() {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [jobs,     setJobs]     = useState([]);
-  const [loading,  setLoading]  = useState(true);
-  const [page,     setPage]     = useState(1);
-  const [hasMore,  setHasMore]  = useState(true);
-  const [total,    setTotal]    = useState(0);
+  const [jobs,    setJobs]    = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page,    setPage]    = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [total,   setTotal]   = useState(0);
 
-  // Filter state
   const [search,   setSearch]   = useState(searchParams.get("search") || "");
   const [jobType,  setJobType]  = useState("");
   const [exp,      setExp]      = useState("");
@@ -45,13 +44,8 @@ export default function JobListing() {
     setLoading(false);
   }, [page, search, jobType, exp, location]);
 
-  // Initial load & filter change
   useEffect(() => { fetchJobs(true); }, [search, jobType, exp, location]);
-
-  // Load more
-  useEffect(() => {
-    if (page > 1) fetchJobs(false);
-  }, [page]);
+  useEffect(() => { if (page > 1) fetchJobs(false); }, [page]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -60,123 +54,120 @@ export default function JobListing() {
   };
 
   const clearFilters = () => { setJobType(""); setExp(""); setLocation(""); setSearch(""); };
-
   const activeFilters = [jobType, exp, location].filter(Boolean).length;
 
   return (
-    <main style={{ minHeight: "100vh" }}>
-      {/* ── Page Header ───────────────────────────────────── */}
-      <div style={styles.pageHeader}>
-        <div className="container">
-          <h1 style={styles.pageTitle}>Browse Jobs</h1>
-          <p style={styles.pageSub}>{total > 0 ? `${total.toLocaleString()} opportunities found` : "Searching…"}</p>
+    <main className="min-h-screen">
+      {/* Page Header */}
+      <div className="bg-gradient-to-b from-brand-navy-lt to-transparent border-b border-blue-100 py-12">
+        <div className="max-w-6xl mx-auto px-6">
+          <h1 className="font-display font-extrabold text-3xl text-navy-700">Browse Jobs</h1>
+          <p className="text-gray-500 mt-1 mb-6 text-sm">
+            {total > 0 ? `${total.toLocaleString()} opportunities found` : "Searching…"}
+          </p>
 
-          <form onSubmit={handleSearch} style={styles.searchRow}>
+          <form onSubmit={handleSearch} className="flex flex-wrap gap-3">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Job title, skills, keywords…"
-              style={styles.searchInput}
+              className="flex-1 min-w-52 bg-white border border-blue-100 rounded-xl px-4 py-2.5 text-sm text-gray-700 focus:border-navy-400 focus:ring-1 focus:ring-navy-100 transition-all"
             />
             <input
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Location or Remote"
-              style={{ ...styles.searchInput, maxWidth: 200 }}
+              className="w-48 bg-white border border-blue-100 rounded-xl px-4 py-2.5 text-sm text-gray-700 focus:border-navy-400 transition-all"
             />
-            <button type="submit" className="btn btn-primary">Search</button>
+            <button type="submit"
+              className="bg-brand-green text-white font-display font-bold text-sm px-6 py-2.5 rounded-xl hover:bg-green-700 transition-all shadow-sm">
+              Search
+            </button>
           </form>
         </div>
       </div>
 
-      <div className="container" style={styles.layout}>
-        {/* ── Sidebar Filters ─────────────────────────────── */}
-        <aside style={styles.sidebar}>
-          <div style={styles.filterHeader}>
-            <span style={styles.filterTitle}>Filters</span>
+      <div className="max-w-6xl mx-auto px-6 py-8 flex gap-6 items-start">
+        {/* Sidebar */}
+        <aside className="w-52 flex-shrink-0 sticky top-20 bg-white rounded-2xl border border-blue-100 shadow-card p-5 flex flex-col gap-5">
+          <div className="flex justify-between items-center">
+            <span className="font-display font-bold text-navy-700 text-sm">Filters</span>
             {activeFilters > 0 && (
-              <button onClick={clearFilters} style={styles.clearBtn}>
-                Clear all ({activeFilters})
+              <button onClick={clearFilters} className="text-xs text-brand-green font-semibold hover:underline">
+                Clear ({activeFilters})
               </button>
             )}
           </div>
 
           {/* Job Type */}
-          <div style={styles.filterGroup}>
-            <p style={styles.filterGroupTitle}>Job Type</p>
+          <FilterGroup title="Job Type">
             {JOB_TYPES.map((t) => (
-              <label key={t} style={styles.filterLabel}>
+              <label key={t} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:text-navy-700">
                 <input
-                  type="radio"
-                  name="jobType"
-                  value={t}
+                  type="radio" name="jobType" value={t}
                   checked={jobType === t}
                   onChange={() => setJobType(t === jobType ? "" : t)}
-                  style={styles.radio}
+                  className="accent-brand-green"
                 />
                 {t}
               </label>
             ))}
-          </div>
+          </FilterGroup>
 
           {/* Experience */}
-          <div style={styles.filterGroup}>
-            <p style={styles.filterGroupTitle}>Experience</p>
+          <FilterGroup title="Experience">
             {EXPERIENCE.map((e) => (
-              <label key={e} style={styles.filterLabel}>
+              <label key={e} className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer hover:text-navy-700">
                 <input
-                  type="radio"
-                  name="exp"
-                  value={e}
+                  type="radio" name="exp" value={e}
                   checked={exp === e}
                   onChange={() => setExp(e === exp ? "" : e)}
-                  style={styles.radio}
+                  className="accent-brand-green"
                 />
                 {e}
               </label>
             ))}
-          </div>
+          </FilterGroup>
         </aside>
 
-        {/* ── Job Grid ──────────────────────────────────────── */}
-        <section style={{ flex: 1, minWidth: 0 }}>
+        {/* Job Grid */}
+        <section className="flex-1 min-w-0">
           {/* Active filter chips */}
           {activeFilters > 0 && (
-            <div style={styles.activeFilters}>
+            <div className="flex flex-wrap gap-2 mb-5">
               {[jobType, exp, location].filter(Boolean).map((f) => (
-                <span key={f} style={styles.filterChip}>
+                <span key={f}
+                  className="inline-flex items-center gap-1.5 bg-brand-green-lt text-brand-green border border-brand-green-md rounded-full px-3 py-1 text-xs font-semibold">
                   {f}
                   <button onClick={() => {
                     if (f === jobType)  setJobType("");
                     if (f === exp)      setExp("");
                     if (f === location) setLocation("");
-                  }} style={styles.chipRemove}>✕</button>
+                  }} className="hover:opacity-70 transition-opacity">✕</button>
                 </span>
               ))}
             </div>
           )}
 
           {loading && jobs.length === 0 ? (
-            <div className="page-loader"><div className="spinner" /></div>
+            <div className="flex justify-center py-20"><div className="spinner" /></div>
           ) : jobs.length === 0 ? (
-            <div className="empty-state">
-              <h3>No jobs found</h3>
-              <p>Try adjusting your filters or search terms.</p>
+            <div className="text-center py-20 text-gray-400">
+              <h3 className="font-display font-bold text-lg text-gray-500 mb-1">No jobs found</h3>
+              <p className="text-sm">Try adjusting your filters or search terms.</p>
             </div>
           ) : (
             <>
-              <div style={styles.grid}>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                 {jobs.map((job) => <JobCard key={job._id || job.id} job={job} />)}
               </div>
 
               {hasMore && (
-                <div style={{ textAlign: "center", marginTop: 32 }}>
+                <div className="text-center mt-8">
                   <button
-                    className="btn btn-outline"
                     onClick={() => setPage((p) => p + 1)}
                     disabled={loading}
-                    style={{ minWidth: 160 }}
-                  >
+                    className="font-display font-bold text-sm text-navy-700 border border-navy-200 bg-white rounded-xl px-8 py-3 hover:bg-brand-navy-lt hover:border-navy-300 transition-all disabled:opacity-50">
                     {loading ? "Loading…" : "Load More Jobs"}
                   </button>
                 </div>
@@ -189,42 +180,11 @@ export default function JobListing() {
   );
 }
 
-const styles = {
-  pageHeader: {
-    background: "linear-gradient(180deg, rgba(255,107,53,0.06) 0%, transparent 100%)",
-    borderBottom: "1px solid var(--border)",
-    padding: "48px 0 36px",
-  },
-  pageTitle: { fontFamily: "var(--font-display)", fontSize: "2rem", fontWeight: 800 },
-  pageSub:   { color: "var(--text-secondary)", marginTop: 6, marginBottom: 24 },
-  searchRow: { display: "flex", gap: 10, flexWrap: "wrap" },
-  searchInput: {
-    flex: 1, minWidth: 200,
-    background: "var(--bg-card)", border: "1px solid var(--border)",
-    borderRadius: "var(--radius-sm)", padding: "10px 16px",
-    color: "var(--text-primary)", fontSize: "0.9rem",
-  },
-  layout:  { display: "flex", gap: 32, padding: "40px 24px", alignItems: "flex-start" },
-  sidebar: {
-    width: 220, flexShrink: 0, position: "sticky", top: 80,
-    background: "var(--bg-card)", border: "1px solid var(--border)",
-    borderRadius: "var(--radius-md)", padding: 20,
-    display: "flex", flexDirection: "column", gap: 20,
-  },
-  filterHeader: { display: "flex", justifyContent: "space-between", alignItems: "center" },
-  filterTitle:  { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "0.95rem" },
-  clearBtn:     { background: "none", border: "none", color: "var(--accent)", fontSize: "0.78rem", cursor: "pointer" },
-  filterGroup:  { display: "flex", flexDirection: "column", gap: 10 },
-  filterGroupTitle: { fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-muted)", marginBottom: 4 },
-  filterLabel:  { display: "flex", alignItems: "center", gap: 8, fontSize: "0.875rem", color: "var(--text-secondary)", cursor: "pointer" },
-  radio:        { accentColor: "var(--accent)" },
-  activeFilters:{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 20 },
-  filterChip:   {
-    display: "inline-flex", alignItems: "center", gap: 6,
-    background: "var(--accent-dim)", color: "var(--accent)",
-    border: "1px solid rgba(255,107,53,0.25)",
-    borderRadius: 99, padding: "4px 12px", fontSize: "0.8rem",
-  },
-  chipRemove: { background: "none", border: "none", color: "var(--accent)", cursor: "pointer", padding: 0, fontSize: "0.7rem" },
-  grid:       { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px,1fr))", gap: 16 },
-};
+function FilterGroup({ title, children }) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">{title}</p>
+      {children}
+    </div>
+  );
+}

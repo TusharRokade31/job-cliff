@@ -4,7 +4,7 @@ import { loginEmployee, loginEmployer } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
-  const [tab,      setTab]      = useState("employee"); // "employee" | "employer"
+  const [tab,      setTab]      = useState("employee");
   const [email,    setEmail]    = useState("");
   const [password, setPassword] = useState("");
   const [loading,  setLoading]  = useState(false);
@@ -19,7 +19,6 @@ export default function Login() {
     try {
       const fn = tab === "employee" ? loginEmployee : loginEmployer;
       const { data } = await fn({ email, password });
-
       const token = data?.token || data?.data?.token;
       const user  = data?.data?.user || data?.user || data?.data || {};
       login(user, tab, token);
@@ -31,73 +30,72 @@ export default function Login() {
   };
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <Link to="/" style={styles.logo}><span style={{ color: "var(--accent)" }}>Job</span>Cliff</Link>
-        <h1 style={styles.heading}>Welcome back</h1>
-        <p  style={styles.sub}>Log in to your account</p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-navy-lt to-blue-50 px-4 py-12">
+      <div className="w-full max-w-md bg-white rounded-3xl border border-blue-100 shadow-card-hover p-10 flex flex-col gap-5">
+
+        {/* Logo */}
+        <Link to="/" className="font-display font-extrabold text-2xl text-center tracking-tight">
+          <span className="text-navy-700">job</span><span className="text-brand-green">cliff</span>
+        </Link>
+
+        <div className="text-center">
+          <h1 className="font-display font-extrabold text-2xl text-navy-700">Welcome back</h1>
+          <p className="text-gray-400 text-sm mt-1">Log in to your account</p>
+        </div>
 
         {/* Tabs */}
-        <div style={styles.tabs}>
+        <div className="flex bg-blue-50 rounded-xl p-1 gap-1">
           {["employee", "employer"].map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              style={{ ...styles.tab, ...(tab === t ? styles.tabActive : {}) }}>
+              className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all ${
+                tab === t
+                  ? "bg-white text-navy-700 shadow-sm"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}>
               {t === "employee" ? "👤 Job Seeker" : "🏢 Employer"}
             </button>
           ))}
         </div>
 
-        {error && <div style={styles.error}>{error}</div>}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-600 rounded-xl px-4 py-3 text-sm">
+            {error}
+          </div>
+        )}
 
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <div style={styles.field}>
-            <label style={styles.label}>Email</label>
-            <input
-              type="email" value={email} required
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              style={styles.input}
-            />
-          </div>
-          <div style={styles.field}>
-            <label style={styles.label}>Password</label>
-            <input
-              type="password" value={password} required
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              style={styles.input}
-            />
-          </div>
-          <Link to="/forgot-password" style={styles.forgot}>Forgot password?</Link>
-          <button type="submit" className="btn btn-primary" disabled={loading}
-            style={{ width: "100%", justifyContent: "center", padding: "12px", fontSize: "0.95rem" }}>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="you@example.com" required />
+          <Field label="Password" type="password" value={password} onChange={setPassword} placeholder="••••••••" required />
+
+          <Link to="/forgot-password" className="text-xs text-brand-green text-right font-semibold hover:underline -mt-2">
+            Forgot password?
+          </Link>
+
+          <button type="submit" disabled={loading}
+            className="w-full bg-navy-700 text-white font-display font-bold py-3 rounded-xl hover:bg-navy-800 transition-all disabled:opacity-60">
             {loading ? "Logging in…" : "Login"}
           </button>
         </form>
 
-        <p style={styles.footer}>
+        <p className="text-center text-sm text-gray-400">
           Don't have an account?{" "}
-          <Link to="/register" style={{ color: "var(--accent)" }}>Sign up</Link>
+          <Link to="/register" className="text-brand-green font-semibold hover:underline">Sign up</Link>
         </p>
       </div>
     </div>
   );
 }
 
-const styles = {
-  page:   { minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "40px 24px" },
-  card:   { background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-xl)", padding: "40px 36px", width: "100%", maxWidth: 420, display: "flex", flexDirection: "column", gap: 16 },
-  logo:   { fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 800, textAlign: "center" },
-  heading:{ fontFamily: "var(--font-display)", fontSize: "1.6rem", fontWeight: 800, textAlign: "center" },
-  sub:    { color: "var(--text-muted)", fontSize: "0.875rem", textAlign: "center", marginTop: -8 },
-  tabs:   { display: "flex", background: "var(--bg-elevated)", borderRadius: "var(--radius-sm)", padding: 4, gap: 4 },
-  tab:    { flex: 1, padding: "8px", borderRadius: 6, border: "none", background: "none", color: "var(--text-muted)", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", transition: "var(--transition)" },
-  tabActive: { background: "var(--bg-card)", color: "var(--text-primary)", boxShadow: "0 1px 4px rgba(0,0,0,0.3)" },
-  error:  { background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171", borderRadius: "var(--radius-sm)", padding: "10px 14px", fontSize: "0.82rem" },
-  form:   { display: "flex", flexDirection: "column", gap: 14 },
-  field:  { display: "flex", flexDirection: "column", gap: 6 },
-  label:  { fontSize: "0.8rem", fontWeight: 600, color: "var(--text-secondary)" },
-  input:  { background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "10px 14px", color: "var(--text-primary)", fontSize: "0.9rem", transition: "var(--transition)" },
-  forgot: { fontSize: "0.78rem", color: "var(--accent)", textAlign: "right", marginTop: -6 },
-  footer: { textAlign: "center", fontSize: "0.82rem", color: "var(--text-muted)", marginTop: 4 },
-};
+function Field({ label, value, onChange, placeholder, type = "text", required }) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{label}</label>
+      <input
+        type={type} value={value} required={required}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-2.5 text-sm text-gray-700 focus:border-navy-400 focus:bg-white focus:ring-2 focus:ring-navy-100 transition-all"
+      />
+    </div>
+  );
+}

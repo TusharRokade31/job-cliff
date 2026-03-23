@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getBanners, getJobs, getEmployers, getCourses } from "../services/api";
-import JobCard      from "../components/JobCard";
-import CompanyCard  from "../components/CompanyCard";
+import JobCard     from "../components/JobCard";
+import CompanyCard from "../components/CompanyCard";
 
 export default function Home() {
   const [search,    setSearch]    = useState("");
@@ -20,22 +20,10 @@ export default function Home() {
       getCourses({ limit: 3 }),
       getBanners(),
     ]).then(([jobsRes, empRes, courseRes, bannerRes]) => {
-      if (jobsRes.status === "fulfilled") {
-        const d = jobsRes.value.data;
-        setJobs(d?.data || d?.jobs || []);
-      }
-      if (empRes.status === "fulfilled") {
-        const d = empRes.value.data;
-        setCompanies(d?.data || d?.employers || []);
-      }
-      if (courseRes.status === "fulfilled") {
-        const d = courseRes.value.data;
-        setCourses(d?.data || d?.courses || []);
-      }
-      if (bannerRes.status === "fulfilled") {
-        const d = bannerRes.value.data;
-        setBanners(d?.data || d?.banners || []);
-      }
+      if (jobsRes.status   === "fulfilled") { const d = jobsRes.value.data;   setJobs(d?.data || d?.jobs || []); }
+      if (empRes.status    === "fulfilled") { const d = empRes.value.data;    setCompanies(d?.data || d?.employers || []); }
+      if (courseRes.status === "fulfilled") { const d = courseRes.value.data; setCourses(d?.data || d?.courses || []); }
+      if (bannerRes.status === "fulfilled") { const d = bannerRes.value.data; setBanners(d?.data || d?.banners || []); }
       setLoading(false);
     });
   }, []);
@@ -47,180 +35,168 @@ export default function Home() {
 
   return (
     <main>
-      {/* ── Hero ─────────────────────────────────────────── */}
-      <section style={styles.hero}>
-        {/* Background grid */}
-        <div style={styles.heroBg} aria-hidden />
+      {/* ── Hero ─────────────────────────────────────── */}
+      <section style={{
+        background: "linear-gradient(135deg, #0D2B6E 0%, #1A6BBF 100%)",
+        padding: "96px 24px 80px",
+        position: "relative",
+        overflow: "hidden",
+      }}>
+        {/* Decorative blobs */}
+        <div style={{ position: "absolute", top: -80, right: -80, width: 400, height: 400, background: "rgba(59,171,53,0.08)", borderRadius: "50%", filter: "blur(60px)", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", bottom: -60, left: -60, width: 320, height: 320, background: "rgba(255,255,255,0.04)", borderRadius: "50%", filter: "blur(40px)", pointerEvents: "none" }} />
 
-        <div className="container" style={styles.heroInner}>
-          <div style={styles.heroBadge}>
-            <span className="badge badge-accent">Now Live</span>
-            <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Smart job matching with email alerts</span>
+        <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 24 }}>
+
+          {/* Badge */}
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 99, padding: "6px 18px", fontSize: "0.82rem", color: "rgba(255,255,255,0.8)" }}>
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: "#3BAB35", display: "inline-block" }} />
+            Smart job matching · Free for candidates
           </div>
 
-          <h1 style={styles.heroTitle}>
-            Your Next Role<br />
-            <span style={styles.heroAccent}>Is One Click Away</span>
+          <h1 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "clamp(2.2rem, 5vw, 3.8rem)", color: "#fff", lineHeight: 1.15, letterSpacing: "-0.02em" }}>
+            Your Next Role Is<br />
+            <span style={{ color: "#3BAB35" }}>One Click Away</span>
           </h1>
 
-          <p style={styles.heroSub}>
+          <p style={{ color: "#93c5fd", fontSize: "1.1rem", maxWidth: 440, lineHeight: 1.6 }}>
             Thousands of jobs. Personalised alerts. Apply in seconds.
           </p>
 
-          {/* Search bar */}
-          <form onSubmit={handleSearch} style={styles.searchForm}>
+          {/* Search */}
+          <form onSubmit={handleSearch} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", maxWidth: 560, background: "#fff", borderRadius: 16, padding: "6px 6px 6px 20px", boxShadow: "0 8px 32px rgba(0,0,0,0.15)" }}>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search jobs, skills, companies…"
-              style={styles.searchInput}
+              style={{ flex: 1, border: "none", background: "transparent", fontSize: "0.95rem", color: "#1a2340", outline: "none", minWidth: 0 }}
             />
-            <button type="submit" className="btn btn-primary" style={{ borderRadius: "var(--radius-sm)", flexShrink: 0 }}>
+            <button type="submit" style={{ background: "#3BAB35", color: "#fff", fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: "0.875rem", border: "none", borderRadius: 10, padding: "10px 22px", cursor: "pointer", flexShrink: 0, boxShadow: "0 2px 8px rgba(59,171,53,0.3)" }}>
               Search Jobs
             </button>
           </form>
 
-          <div style={styles.heroStats}>
+          {/* Stats */}
+          <div style={{ display: "flex", gap: 48, marginTop: 8 }}>
             {[["10K+", "Active Jobs"], ["5K+", "Companies"], ["50K+", "Candidates"]].map(([n, l]) => (
-              <div key={l} style={styles.statItem}>
-                <span style={styles.statNum}>{n}</span>
-                <span style={styles.statLabel}>{l}</span>
+              <div key={l} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <span style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.6rem", color: "#fff" }}>{n}</span>
+                <span style={{ fontSize: "0.75rem", color: "#93c5fd" }}>{l}</span>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── What's New Banners ─────────────────────────────── */}
+      {/* ── Banners ───────────────────────────────────── */}
       {banners.length > 0 && (
-        <section style={styles.section}>
-          <div className="container">
-            <div className="section-header">
-              <h2 className="section-title">What's New</h2>
-            </div>
-            <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8 }}>
-              {banners.map((b, i) => (
-                <div key={i} style={styles.bannerCard}>
-                  {b.image && <img src={b.image} alt={b.title} style={styles.bannerImg} />}
-                  <p style={styles.bannerTitle}>{b.title}</p>
-                </div>
-              ))}
-            </div>
+        <Section title="What's New">
+          <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8 }}>
+            {banners.map((b, i) => (
+              <div key={i} style={{ flexShrink: 0, width: 260, background: "#fff", border: "1px solid #e2eaf8", borderRadius: 16, overflow: "hidden", boxShadow: "0 2px 12px rgba(13,43,110,0.06)" }}>
+                {b.image && <img src={b.image} alt={b.title} style={{ width: "100%", height: 120, objectFit: "cover" }} onError={e => e.target.style.display = "none"} />}
+                <p style={{ padding: "10px 14px", fontSize: "0.85rem", fontWeight: 600, color: "#0D2B6E" }}>{b.title}</p>
+              </div>
+            ))}
           </div>
-        </section>
+        </Section>
       )}
 
-      {/* ── Recommended Jobs ──────────────────────────────── */}
-      <section style={styles.section}>
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Recommended Jobs</h2>
-            <Link to="/jobs" className="section-link">View all →</Link>
+      {/* ── Recommended Jobs ─────────────────────────── */}
+      <Section title="Recommended Jobs" linkTo="/jobs" linkText="View all →">
+        {loading ? <Loader /> : jobs.length === 0 ? <Empty title="No jobs found" sub="Check back soon." /> : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px,1fr))", gap: 16 }}>
+            {jobs.map((job) => <JobCard key={job._id || job.id} job={job} />)}
           </div>
-          {loading ? (
-            <div className="page-loader"><div className="spinner" /></div>
-          ) : jobs.length === 0 ? (
-            <div className="empty-state"><h3>No jobs found</h3><p>Check back soon.</p></div>
-          ) : (
-            <div style={styles.jobGrid}>
-              {jobs.map((job) => <JobCard key={job._id || job.id} job={job} />)}
-            </div>
-          )}
-        </div>
-      </section>
+        )}
+      </Section>
 
-      {/* ── Companies ─────────────────────────────────────── */}
-      <section style={{ ...styles.section, background: "var(--bg-card)", padding: "60px 0" }}>
-        <div className="container">
-          <div className="section-header">
-            <h2 className="section-title">Top Companies</h2>
-            <Link to="/employers" className="section-link">See all →</Link>
-          </div>
-          {loading ? (
-            <div className="page-loader"><div className="spinner" /></div>
-          ) : (
-            <div style={styles.companyGrid}>
+      {/* ── Top Companies ────────────────────────────── */}
+      <div style={{ background: "#fff", borderTop: "1px solid #e2eaf8", borderBottom: "1px solid #e2eaf8" }}>
+        <Section title="Top Companies" linkTo="/employers" linkText="See all →">
+          {loading ? <Loader /> : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px,1fr))", gap: 16 }}>
               {companies.map((c) => <CompanyCard key={c._id || c.id} company={c} />)}
             </div>
           )}
-        </div>
-      </section>
+        </Section>
+      </div>
 
-      {/* ── Courses ───────────────────────────────────────── */}
+      {/* ── Courses ───────────────────────────────────── */}
       {courses.length > 0 && (
-        <section style={styles.section}>
-          <div className="container">
-            <div className="section-header">
-              <h2 className="section-title">Placement Courses</h2>
-            </div>
-            <div style={styles.courseGrid}>
-              {courses.map((c) => (
-                <div key={c._id || c.id} className="card" style={styles.courseCard}>
-                  <span className="badge badge-purple" style={{ marginBottom: 10 }}>
-                    {c.course_type || "Course"}
-                  </span>
-                  <h4 style={styles.courseTitle}>{c.title || c.course_name}</h4>
-                  <p  style={styles.courseSub}>{c.instructor_name || c.instructor}</p>
-                  {c.price != null && (
-                    <p style={{ color: "var(--accent)", fontWeight: 700, fontSize: "0.95rem", marginTop: "auto" }}>
-                      ₹{c.price}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
+        <Section title="Placement Courses">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px,1fr))", gap: 16 }}>
+            {courses.map((c) => (
+              <div key={c._id || c.id} style={{ background: "#fff", border: "1px solid #e2eaf8", borderRadius: 16, padding: 20, display: "flex", flexDirection: "column", gap: 8, minHeight: 160, boxShadow: "0 2px 12px rgba(13,43,110,0.06)" }}>
+                <span style={{ background: "#f3e8ff", color: "#7c3aed", border: "1px solid #e9d5ff", borderRadius: 99, padding: "2px 12px", fontSize: "0.7rem", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", width: "fit-content" }}>
+                  {c.course_type || "Live Session"}
+                </span>
+                <h4 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: "0.95rem", color: "#0D2B6E", lineHeight: 1.4 }}>
+                  {c.title || c.course_name}
+                </h4>
+                {c.instructor_name && <p style={{ fontSize: "0.8rem", color: "#9ca3af" }}>{c.instructor_name}</p>}
+                {c.price != null && (
+                  <p style={{ color: "#3BAB35", fontWeight: 700, fontSize: "1rem", marginTop: "auto" }}>₹{c.price}</p>
+                )}
+              </div>
+            ))}
           </div>
-        </section>
+        </Section>
       )}
 
-      {/* ── CTA Banner ────────────────────────────────────── */}
-      <section style={styles.ctaSection}>
-        <div className="container" style={styles.ctaInner}>
+      {/* ── CTA Banner ───────────────────────────────── */}
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px 80px" }}>
+        <div style={{ background: "linear-gradient(135deg, #0D2B6E 0%, #1A6BBF 100%)", borderRadius: 24, padding: "48px 48px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24 }}>
           <div>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", fontWeight: 800 }}>
+            <h2 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.8rem", color: "#fff" }}>
               Hiring top talent?
             </h2>
-            <p style={{ color: "var(--text-secondary)", marginTop: 8 }}>
+            <p style={{ color: "#93c5fd", marginTop: 8, fontSize: "0.95rem" }}>
               Post a job and get instant email alerts to matching candidates.
             </p>
           </div>
-          <Link to="/register" className="btn btn-primary" style={{ fontSize: "1rem", padding: "12px 28px" }}>
+          <Link to="/register" style={{ background: "#3BAB35", color: "#fff", fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 700, fontSize: "1rem", padding: "14px 32px", borderRadius: 12, boxShadow: "0 4px 16px rgba(59,171,53,0.3)", whiteSpace: "nowrap" }}>
             Post a Job Free
           </Link>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
 
-const styles = {
-  hero: { position: "relative", padding: "100px 0 80px", overflow: "hidden" },
-  heroBg: {
-    position: "absolute", inset: 0, zIndex: 0,
-    background: "radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,107,53,0.08) 0%, transparent 70%)",
-    pointerEvents: "none",
-  },
-  heroInner: { position: "relative", zIndex: 1, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 24 },
-  heroBadge: { display: "flex", alignItems: "center", gap: 10, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 99, padding: "6px 16px" },
-  heroTitle: { fontFamily: "var(--font-display)", fontSize: "clamp(2.4rem,6vw,4rem)", fontWeight: 800, lineHeight: 1.1, letterSpacing: "-0.03em" },
-  heroAccent: { color: "var(--accent)" },
-  heroSub: { fontSize: "1.1rem", color: "var(--text-secondary)", maxWidth: 480 },
-  searchForm: { display: "flex", gap: 10, width: "100%", maxWidth: 560, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", padding: "6px 6px 6px 16px" },
-  searchInput: { flex: 1, background: "none", border: "none", color: "var(--text-primary)", fontSize: "0.95rem", minWidth: 0 },
-  heroStats: { display: "flex", gap: 40, marginTop: 8 },
-  statItem:  { display: "flex", flexDirection: "column", alignItems: "center", gap: 2 },
-  statNum:   { fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.5rem", color: "var(--text-primary)" },
-  statLabel: { fontSize: "0.78rem", color: "var(--text-muted)" },
-  section:   { padding: "60px 0" },
-  bannerCard:{ flexShrink: 0, width: 260, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-md)", overflow: "hidden" },
-  bannerImg: { width: "100%", height: 120, objectFit: "cover" },
-  bannerTitle:{ padding: "10px 14px", fontSize: "0.85rem", fontWeight: 600 },
-  jobGrid:   { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px,1fr))", gap: 16 },
-  companyGrid:{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px,1fr))", gap: 16 },
-  courseGrid:{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px,1fr))", gap: 16 },
-  courseCard:{ padding: 20, display: "flex", flexDirection: "column", gap: 6, minHeight: 160 },
-  courseTitle:{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "0.95rem" },
-  courseSub: { fontSize: "0.8rem", color: "var(--text-muted)" },
-  ctaSection:{ background: "linear-gradient(135deg, var(--accent-dim) 0%, var(--accent-2-dim) 100%)", border: "1px solid var(--border)", borderRadius: "var(--radius-xl)", margin: "0 24px 80px", padding: "48px 40px" },
-  ctaInner:  { display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 24, maxWidth: 1200, margin: "0 auto" },
-};
+function Section({ title, linkTo, linkText, children }) {
+  return (
+    <div style={{ padding: "56px 0" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 24 }}>
+          <h2 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.5rem", color: "#0D2B6E" }}>
+            {title}
+          </h2>
+          {linkTo && (
+            <Link to={linkTo} style={{ fontSize: "0.875rem", fontWeight: 700, color: "#3BAB35" }}>
+              {linkText}
+            </Link>
+          )}
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Loader() {
+  return (
+    <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
+      <div className="spinner" />
+    </div>
+  );
+}
+
+function Empty({ title, sub }) {
+  return (
+    <div style={{ textAlign: "center", padding: "60px 0", color: "#9ca3af" }}>
+      <h3 style={{ fontFamily: "'Bricolage Grotesque', sans-serif", fontSize: "1.1rem", color: "#6b7280", marginBottom: 8 }}>{title}</h3>
+      <p style={{ fontSize: "0.875rem" }}>{sub}</p>
+    </div>
+  );
+}

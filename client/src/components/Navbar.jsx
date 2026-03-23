@@ -1,46 +1,89 @@
-import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { isLoggedIn, user, userType, logout } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
   const navigate  = useNavigate();
   const location  = useLocation();
 
   const isActive = (path) => location.pathname === path;
-
   const handleLogout = () => { logout(); navigate("/"); };
 
   return (
-    <nav style={styles.nav}>
-      <div className="container" style={styles.inner}>
-        {/* Logo */}
-        <Link to="/" style={styles.logo}>
-          <span style={styles.logoAccent}>Job</span>Cliff
+    <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "#fff", borderBottom: "1px solid #e2eaf8" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+
+        {/* Logo image */}
+        <Link to="/" style={{ display: "flex", alignItems: "center" }}>
+          <img
+            src="/jobclif.webp"
+            alt="JobCliff"
+            style={{ height: 40, width: "auto", objectFit: "contain" }}
+            onError={(e) => {
+              // fallback to text if logo not found
+              e.target.style.display = "none";
+              e.target.nextSibling.style.display = "inline";
+            }}
+          />
+          <span style={{ display: "none", fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.4rem" }}>
+            <span style={{ color: "#0D2B6E" }}>job</span><span style={{ color: "#3BAB35" }}>cliff</span>
+          </span>
         </Link>
 
-        {/* Desktop nav links */}
-        <div style={styles.links}>
-          <Link to="/"       style={{ ...styles.link, ...(isActive("/") ? styles.linkActive : {}) }}>Home</Link>
-          <Link to="/jobs"   style={{ ...styles.link, ...(isActive("/jobs") ? styles.linkActive : {}) }}>Jobs</Link>
+        {/* Nav links */}
+        <div style={{ display: "flex", gap: 4 }}>
+          {[["Home", "/"], ["Browse Jobs", "/jobs"]].map(([label, path]) => (
+            <Link key={path} to={path} style={{
+              padding: "8px 16px",
+              borderRadius: 12,
+              fontSize: "0.875rem",
+              fontWeight: 600,
+              color: isActive(path) ? "#0D2B6E" : "#6b7280",
+              background: isActive(path) ? "#edf2fb" : "transparent",
+              transition: "all 0.15s",
+            }}>
+              {label}
+            </Link>
+          ))}
         </div>
 
-        {/* Right side */}
-        <div style={styles.actions}>
+        {/* Auth actions */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           {isLoggedIn ? (
             <>
-              <span style={styles.userChip}>
-                {userType === "employer" ? "🏢" : "👤"} {user?.name || user?.full_name || "Account"}
+              <span style={{
+                display: "flex", alignItems: "center", gap: 8,
+                fontSize: "0.82rem", color: "#4b5563",
+                background: "#edf2fb", border: "1px solid #d0dff5",
+                borderRadius: 99, padding: "6px 14px",
+              }}>
+                {userType === "employer" ? "🏢" : "👤"}
+                {user?.name || user?.full_name || "Account"}
               </span>
-              <button className="btn btn-outline" onClick={handleLogout} style={{ padding: "8px 16px", fontSize: "0.8rem" }}>
+              <button onClick={handleLogout} style={{
+                fontSize: "0.82rem", fontWeight: 600,
+                color: "#374151", border: "1px solid #d1d5db",
+                background: "#fff", borderRadius: 10,
+                padding: "8px 16px", cursor: "pointer",
+                transition: "all 0.15s",
+              }}>
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/login"    className="btn btn-ghost"   style={{ fontSize: "0.875rem" }}>Login</Link>
-              <Link to="/register" className="btn btn-primary" style={{ fontSize: "0.875rem" }}>Sign Up</Link>
+              <Link to="/login" style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0D2B6E" }}>
+                Login
+              </Link>
+              <Link to="/register" style={{
+                fontSize: "0.875rem", fontWeight: 700,
+                background: "#3BAB35", color: "#fff",
+                borderRadius: 10, padding: "9px 20px",
+                boxShadow: "0 2px 8px rgba(59,171,53,0.2)",
+                transition: "all 0.15s",
+              }}>
+                Sign Up
+              </Link>
             </>
           )}
         </div>
@@ -48,44 +91,3 @@ export default function Navbar() {
     </nav>
   );
 }
-
-const styles = {
-  nav: {
-    position: "sticky", top: 0, zIndex: 100,
-    background: "rgba(10,10,15,0.85)",
-    backdropFilter: "blur(16px)",
-    borderBottom: "1px solid var(--border)",
-  },
-  inner: {
-    display: "flex", alignItems: "center",
-    justifyContent: "space-between",
-    height: 64,
-  },
-  logo: {
-    fontFamily: "var(--font-display)",
-    fontSize: "1.4rem",
-    fontWeight: 800,
-    letterSpacing: "-0.02em",
-    color: "var(--text-primary)",
-  },
-  logoAccent: { color: "var(--accent)" },
-  links: { display: "flex", gap: 8 },
-  link: {
-    padding: "6px 14px",
-    borderRadius: "var(--radius-sm)",
-    fontSize: "0.875rem",
-    fontWeight: 500,
-    color: "var(--text-secondary)",
-    transition: "var(--transition)",
-  },
-  linkActive: { color: "var(--text-primary)", background: "var(--bg-elevated)" },
-  actions: { display: "flex", alignItems: "center", gap: 10 },
-  userChip: {
-    fontSize: "0.8rem",
-    color: "var(--text-secondary)",
-    background: "var(--bg-elevated)",
-    border: "1px solid var(--border)",
-    borderRadius: 99,
-    padding: "5px 12px",
-  },
-};

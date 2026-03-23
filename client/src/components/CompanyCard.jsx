@@ -1,44 +1,34 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function CompanyCard({ company }) {
+  const [imgErr, setImgErr] = useState(false);
+
   const id      = company._id || company.id;
-  const name    = company.company_name || company.name || "Company";
+  const name    = company.company_name || company.organization_name || company.name || "Company";
   const industry= company.industry || "";
-  const city    = company.city || company.location || "";
-  const logo    = company.logo || company.company_logo || null;
+  const city    = company.city || company.organization_city || company.location || "";
+  const logo    = company.logo || company.company_logo || company.logo_url || null;
   const jobs    = company.total_jobs ?? company.job_count ?? null;
 
   return (
-    <Link to={`/employers/${id}`} style={{ display: "block", textDecoration: "none" }}>
-      <div className="card" style={styles.card}>
-        <div style={styles.logoWrap}>
-          {logo
-            ? <img src={logo} alt={name} style={styles.logo} />
-            : <span style={styles.logoFallback}>{name[0]}</span>
+    <Link to={`/employers/${id}`} className="block group">
+      <div className="bg-white rounded-2xl border border-blue-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 p-5 flex flex-col items-center gap-3 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-brand-navy-lt border border-blue-100 overflow-hidden flex items-center justify-center">
+          {logo && !imgErr
+            ? <img src={logo} alt={name} className="w-full h-full object-cover" onError={() => setImgErr(true)} />
+            : <span className="font-display font-bold text-2xl text-navy-700">{name[0]?.toUpperCase()}</span>
           }
         </div>
-        <h4 style={styles.name}>{name}</h4>
-        {industry && <p style={styles.sub}>{industry}</p>}
-        <div style={styles.footer}>
-          {city  && <span style={styles.chip}>📍 {city}</span>}
-          {jobs != null && <span style={styles.chip}>💼 {jobs} jobs</span>}
+        <div>
+          <h4 className="font-display font-bold text-navy-700 text-sm group-hover:text-brand-green transition-colors">{name}</h4>
+          {industry && <p className="text-xs text-gray-400 mt-0.5">{industry}</p>}
+        </div>
+        <div className="flex flex-wrap justify-center gap-1.5">
+          {city  && <span className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-full px-2.5 py-0.5">📍 {city}</span>}
+          {jobs != null && <span className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-full px-2.5 py-0.5">💼 {jobs} jobs</span>}
         </div>
       </div>
     </Link>
   );
 }
-
-const styles = {
-  card: { padding: 20, display: "flex", flexDirection: "column", gap: 8, alignItems: "center", textAlign: "center" },
-  logoWrap: {
-    width: 56, height: 56, borderRadius: "var(--radius-md)",
-    background: "var(--bg-elevated)", border: "1px solid var(--border)",
-    display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden",
-  },
-  logo: { width: "100%", height: "100%", objectFit: "cover" },
-  logoFallback: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "1.3rem", color: "var(--accent)" },
-  name: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "0.95rem" },
-  sub:  { fontSize: "0.78rem", color: "var(--text-muted)" },
-  footer: { display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center" },
-  chip:   { fontSize: "0.72rem", color: "var(--text-secondary)", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: 99, padding: "2px 8px" },
-};

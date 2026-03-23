@@ -5,18 +5,23 @@ import { useAuth } from "../context/AuthContext";
 
 export default function JobCard({ job }) {
   const { isLoggedIn } = useAuth();
-  const [saved, setSaved] = useState(job.is_saved || false);
+  const [saved,  setSaved]  = useState(job.is_saved || false);
   const [saving, setSaving] = useState(false);
+  const [imgErr, setImgErr] = useState(false);
 
   const id       = job._id || job.id;
   const title    = job.title || job.job_title || "Untitled Role";
-  const company  = job.company_name || job.employer_name || "Company";
+  const company  = job.company_name || job.employer?.organization_name || job.employer_name || job.company || "Company";
   const location = job.job_location || job.location || "Remote";
-  const type     = job.job_type || job.employment_type || "Full-time";
-  const skills   = Array.isArray(job.skills) ? job.skills.slice(0, 3) : [];
+  const type     = job.job_type || job.employment_type || job.type || "Full-time";
+  const skills   = Array.isArray(job.skills) ? job.skills.slice(0, 3)
+                  : Array.isArray(job.jobSkills) ? job.jobSkills.slice(0, 3).map(s => s.skill_name)
+                  : [];
   const salary   = job.salary_range || job.salary || null;
-  const posted   = job.created_at ? new Date(job.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "";
-  const logo     = job.company_logo || job.logo || null;
+  const posted   = job.created_at
+    ? new Date(job.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+    : job.postedDate || "";
+  const logo     = job.company_logo || job.employer?.logo_url || job.logo || null;
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -30,50 +35,64 @@ export default function JobCard({ job }) {
   };
 
   return (
-    <Link to={`/jobs/${id}`} style={{ display: "block", textDecoration: "none" }}>
-      <div className="card" style={styles.card}>
+    <Link to={`/jobs/${id}`} className="block group">
+      <div className="bg-white rounded-2xl border border-blue-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 p-5 flex flex-col gap-3 h-full">
+
         {/* Top row */}
-        <div style={styles.top}>
-          <div style={styles.logoWrap}>
-            {logo
-              ? <img src={logo} alt={company} style={styles.logo} />
-              : <span style={styles.logoFallback}>{company[0]}</span>
+        <div className="flex justify-between items-start">
+          <div className="w-11 h-11 rounded-xl bg-brand-navy-lt border border-blue-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+            {logo && !imgErr
+              ? <img src={logo} alt={company} className="w-full h-full object-cover" onError={() => setImgErr(true)} />
+              : <span className="font-display font-bold text-lg text-navy-700">{(company)[0]?.toUpperCase()}</span>
             }
           </div>
-          <div style={styles.meta}>
-            <span className="badge badge-accent">{type}</span>
-            {posted && <span style={styles.date}>{posted}</span>}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider bg-brand-green-lt text-brand-green border border-brand-green-md rounded-full px-3 py-1">
+              {type}
+            </span>
+            {posted && <span className="text-xs text-gray-400">{posted}</span>}
           </div>
         </div>
 
         {/* Title + company */}
-        <h3 style={styles.title}>{title}</h3>
-        <p  style={styles.company}>{company}</p>
+        <div>
+          <h3 className="font-display font-bold text-navy-700 text-base leading-snug group-hover:text-brand-green transition-colors">
+            {title}
+          </h3>
+          <p className="text-sm text-gray-500 mt-0.5">{company}</p>
+        </div>
 
         {/* Location + salary */}
-        <div style={styles.row}>
-          <span style={styles.chip}>📍 {location}</span>
-          {salary && <span style={styles.chip}>💰 {salary}</span>}
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-full px-3 py-1">
+            📍 {location}
+          </span>
+          {salary && (
+            <span className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-full px-3 py-1">
+              💰 {salary}
+            </span>
+          )}
         </div>
 
         {/* Skills */}
         {skills.length > 0 && (
-          <div style={styles.skills}>
+          <div className="flex flex-wrap gap-1.5">
             {skills.map((s) => (
-              <span key={s} className="tag">{s}</span>
+              <span key={s} className="text-xs text-navy-600 bg-brand-navy-lt border border-blue-100 rounded-full px-2.5 py-0.5">
+                {s}
+              </span>
             ))}
           </div>
         )}
 
         {/* Footer */}
-        <div style={styles.footer}>
-          <span style={styles.applyLink}>View Details →</span>
+        <div className="flex justify-between items-center mt-auto pt-3 border-t border-blue-50">
+          <span className="text-xs font-bold text-brand-green group-hover:underline">View Details →</span>
           {isLoggedIn && (
             <button
               onClick={handleSave}
-              style={{ ...styles.saveBtn, color: saved ? "var(--accent)" : "var(--text-muted)" }}
-              title={saved ? "Unsave" : "Save job"}
-            >
+              className={`text-lg px-2 py-1 transition-colors ${saved ? "text-red-500" : "text-gray-300 hover:text-red-400"}`}
+              title={saved ? "Unsave" : "Save job"}>
               {saved ? "♥" : "♡"}
             </button>
           )}
@@ -82,43 +101,3 @@ export default function JobCard({ job }) {
     </Link>
   );
 }
-
-const styles = {
-  card: { padding: 20, display: "flex", flexDirection: "column", gap: 10, height: "100%" },
-  top:  { display: "flex", justifyContent: "space-between", alignItems: "flex-start" },
-  logoWrap: {
-    width: 44, height: 44,
-    borderRadius: "var(--radius-sm)",
-    background: "var(--bg-elevated)",
-    border: "1px solid var(--border)",
-    overflow: "hidden",
-    flexShrink: 0,
-    display: "flex", alignItems: "center", justifyContent: "center",
-  },
-  logo: { width: "100%", height: "100%", objectFit: "cover" },
-  logoFallback: {
-    fontFamily: "var(--font-display)",
-    fontWeight: 700, fontSize: "1.1rem",
-    color: "var(--accent)",
-  },
-  meta: { display: "flex", gap: 8, alignItems: "center" },
-  date: { fontSize: "0.75rem", color: "var(--text-muted)" },
-  title: {
-    fontFamily: "var(--font-display)",
-    fontSize: "1rem", fontWeight: 700,
-    color: "var(--text-primary)",
-    lineHeight: 1.3,
-  },
-  company: { fontSize: "0.875rem", color: "var(--text-secondary)" },
-  row: { display: "flex", gap: 8, flexWrap: "wrap" },
-  chip: {
-    fontSize: "0.78rem", color: "var(--text-secondary)",
-    background: "var(--bg-elevated)",
-    border: "1px solid var(--border)",
-    borderRadius: 99, padding: "3px 10px",
-  },
-  skills: { display: "flex", gap: 6, flexWrap: "wrap" },
-  footer: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "auto", paddingTop: 10, borderTop: "1px solid var(--border)" },
-  applyLink: { fontSize: "0.8rem", color: "var(--accent)", fontWeight: 600 },
-  saveBtn: { background: "none", border: "none", fontSize: "1.2rem", padding: "4px 8px", transition: "var(--transition)" },
-};
