@@ -22,7 +22,7 @@ export default function Footer() {
           {/* Brand Col */}
           <div className="flex flex-col gap-4">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/jobclif.webp" alt="JobCliff" className="h-10 w-auto object-contain" />
+              <img src="/jobclif.webp" alt="JobCliff" className="h-20 w-auto object-contain" />
               <div className="hidden flex-col">
                 <span className="font-extrabold text-xl tracking-tight leading-none">
                   <span className="text-[#0D2B6E]">job</span><span className="text-[#3BAB35]">cliff</span>
@@ -35,7 +35,7 @@ export default function Footer() {
           {/* Quick Links */}
           <div>
             <h4 className="font-bold text-gray-900 mb-4 text-sm">Quick Links</h4>
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               <li><Link to="/" className="text-sm text-gray-600 hover:text-[#3BAB35]">Home</Link></li>
               <li><Link to="/about" className="text-sm text-gray-600 hover:text-[#3BAB35]">About Us</Link></li>
               <li><Link to="/jobs" className="text-sm text-gray-600 hover:text-[#3BAB35]">Jobs</Link></li>
@@ -46,7 +46,7 @@ export default function Footer() {
 
           {/* Registration / Links */}
           <div>
-            <ul className="space-y-3 mt-9">
+            <ul className="space-y-2 mt-9">
               <li><Link to="/register-institution" className="text-sm text-gray-600 hover:text-[#3BAB35]">Register your institution</Link></li>
               <li><Link to="/faqs" className="text-sm text-gray-600 hover:text-[#3BAB35]">FAQs</Link></li>
               <li><Link to="/contact" className="text-sm text-gray-600 hover:text-[#3BAB35]">Contact</Link></li>

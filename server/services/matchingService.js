@@ -4,9 +4,9 @@
  * Determines which employees match a job post,
  * and which employers' jobs match a candidate's profile.
  *
- * Matching Criteria (as configured by client):
- *   ✓ Job Role / Title
- *   ✓ Skills
+ * Matching Criteria:
+ *   ✓ Job Role / Title  (fuzzy contains)
+ *   ✓ Skills            (overlap count — used for scoring)
  * ──────────────────────────────────────────────────────────
  */
 
@@ -15,61 +15,79 @@ require("dotenv").config({ path: require("path").resolve(__dirname, "../../.env"
 
 const BASE_URL = process.env.JOB_CLIFF_API_BASE;
 
-/**
- * Normalise a string for comparison — lowercase + trim
- */
 const norm = (str = "") => String(str).toLowerCase().trim();
 
-/**
- * Check if two skill arrays overlap (at least one common skill)
- */
 function skillsOverlap(jobSkills = [], candidateSkills = []) {
   const jobSet = new Set(jobSkills.map(norm));
   return candidateSkills.some((s) => jobSet.has(norm(s)));
 }
 
-/**
- * Check if candidate's desired role/title matches the job title
- */
+/** Returns count of overlapping skills (used for ranking) */
+function skillsOverlapCount(jobSkills = [], candidateSkills = []) {
+  const jobSet = new Set(jobSkills.map(norm));
+  return candidateSkills.filter((s) => jobSet.has(norm(s))).length;
+}
+
 function titleMatches(jobTitle = "", candidateTitle = "") {
   const jt = norm(jobTitle);
   const ct = norm(candidateTitle);
-  // fuzzy: if either contains the other
   return jt.includes(ct) || ct.includes(jt) || jt === ct;
+}
+
+/**
+ * scoreMatch
+ * ──────────
+ * Returns a numeric relevance score for a candidate against a job.
+ * Higher = better match.
+ *
+ * Scoring:
+ *   Title match     → +10
+ *   Each skill hit  → +3
+ */
+function scoreMatch(job, candidate) {
+  let score = 0;
+
+  if (titleMatches(
+    job.title || job.job_title || "",
+    candidate.job_title || candidate.desired_role || ""
+  )) {
+    score += 10;
+  }
+
+  score += skillsOverlapCount(
+    job.skills || job.required_skills || [],
+    candidate.skills || []
+  ) * 3;
+
+  return score;
 }
 
 /**
  * findMatchingEmployeesForJob
  * ────────────────────────────
- * Fetches the employee listing from Job Cliff API and returns
- * those whose title / skills match the provided job.
+ * Fetches the employee/user listing and returns those whose
+ * title / skills match the provided job.
  *
- * NOTE: The Job Cliff API doesn't expose a direct
- *       "list all employees" endpoint in the CSV.
- *       We use the applied-users approach or a best-available endpoint.
- *       In production, replace with your actual employee search/listing endpoint.
- *
- * @param {object} job - job object { title, skills }
- * @param {string} authToken - bearer token for auth'd endpoints
- * @returns {Array} matched employees
+ * ⚠️  Replace the endpoint below with your actual user-listing URL
+ *     once confirmed (e.g. /users/listing?page=1&limit=200).
+ *     Current endpoint mirrors the pattern used by other list routes.
  */
 async function findMatchingEmployeesForJob(job, authToken = "") {
   try {
-    // Fetch recent job applicants / users as a proxy for the employee pool
-    // TODO: Replace with actual employee listing endpoint when available
-    const headers = authToken
-      ? { Authorization: `Bearer ${authToken}` }
-      : {};
+    const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
-    const { data } = await axios.get(`${BASE_URL}/jobs/listing?page=1&limit=100`, {
-      headers,
-    });
+    // ── Fetch candidate pool ──────────────────────────────────
+    // TODO: confirm the correct users-listing endpoint with your backend team.
+    //       Trying /users?page=1&limit=200 as a reasonable default.
+    const { data } = await axios.get(`${BASE_URL}/users?page=1&limit=200`, { headers });
 
-    const employees = data?.data || data?.employees || [];
+    const employees = data?.data || data?.users || data?.employees || [];
 
-    // Filter: match by title OR skills
     return employees.filter((emp) => {
-      const titleMatch = titleMatches(job.title, emp.job_title || emp.desired_role || "");
+      const titleMatch = titleMatches(
+        job.title || job.job_title || "",
+        emp.job_title || emp.desired_role || ""
+      );
       const skillMatch = skillsOverlap(
         job.skills || job.required_skills || [],
         emp.skills || []
@@ -83,13 +101,29 @@ async function findMatchingEmployeesForJob(job, authToken = "") {
 }
 
 /**
+ * findTop10MatchingEmployeesForJob
+ * ─────────────────────────────────
+ * Same as findMatchingEmployeesForJob but:
+ *   1. Scores each match
+ *   2. Sorts highest → lowest
+ *   3. Returns at most 10 candidates
+ *
+ * Use this to build the employer digest email.
+ */
+async function findTop10MatchingEmployeesForJob(job, authToken = "") {
+  const matched = await findMatchingEmployeesForJob(job, authToken);
+
+  return matched
+    .map((emp) => ({ ...emp, _matchScore: scoreMatch(job, emp) }))
+    .sort((a, b) => b._matchScore - a._matchScore)
+    .slice(0, 10);
+}
+
+/**
  * findMatchingJobsForCandidate
  * ──────────────────────────────
  * Fetches all active job listings and returns those that match
  * the candidate's desired role and skills.
- *
- * @param {object} candidate - { desired_role, job_title, skills }
- * @returns {Array} matched jobs
  */
 async function findMatchingJobsForCandidate(candidate) {
   try {
@@ -115,5 +149,6 @@ async function findMatchingJobsForCandidate(candidate) {
 
 module.exports = {
   findMatchingEmployeesForJob,
+  findTop10MatchingEmployeesForJob,  // ← NEW export
   findMatchingJobsForCandidate,
 };

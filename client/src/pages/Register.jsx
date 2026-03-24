@@ -47,8 +47,10 @@ export default function Register() {
 
         const body = { 
           firstName: empForm.firstName,
+          first_name: empForm.firstName, // Added snake_case
           lastName: empForm.lastName,
-          full_name: `${empForm.firstName} ${empForm.lastName}`.trim(), // Added to satisfy notNull Violation
+          last_name: empForm.lastName,   // Added snake_case
+          full_name: `${empForm.firstName} ${empForm.lastName}`.trim(), 
           email: empForm.email,
           officialEmail: empForm.email,
           official_email: empForm.email,
@@ -73,8 +75,10 @@ export default function Register() {
 
         const employerBody = {
           firstName: emplorForm.firstName,
+          first_name: emplorForm.firstName, // Added snake_case
           lastName: emplorForm.lastName,
-          full_name: `${emplorForm.firstName} ${emplorForm.lastName}`.trim(), // Added to satisfy notNull Violation
+          last_name: emplorForm.lastName,   // Added snake_case
+          full_name: `${emplorForm.firstName} ${emplorForm.lastName}`.trim(),
           email: emplorForm.email,
           officialEmail: emplorForm.email,
           official_email: emplorForm.email,
@@ -82,6 +86,7 @@ export default function Register() {
           phone_number: numericMobile, 
           password: emplorForm.password,
           company_name: emplorForm.company_name,
+          companyName: emplorForm.company_name, // Added camelCase alternative just in case
           industry: emplorForm.industry
         }
 

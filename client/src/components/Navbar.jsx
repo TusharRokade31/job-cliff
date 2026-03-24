@@ -3,10 +3,10 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { isLoggedIn, user, userType, logout } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate  = useNavigate();
+  const location  = useLocation();
 
-  const isActive = (path) => location.pathname === path;
+  const isActive     = (path) => location.pathname === path;
   const handleLogout = () => { logout(); navigate("/"); };
 
   return (
@@ -22,13 +22,13 @@ export default function Navbar() {
       {/* Main Navbar */}
       <nav className="border-b border-gray-100 shadow-sm">
         <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
-          
+
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2">
             <img
               src="/jobclif.webp"
               alt="JobCliff"
-              className="h-10 w-auto object-contain"
+              className="h-15 w-auto object-contain"
               onError={(e) => {
                 e.target.style.display = "none";
                 e.target.nextSibling.style.display = "flex";
@@ -46,10 +46,13 @@ export default function Navbar() {
           {/* Nav Links (Desktop) */}
           <div className="hidden lg:flex items-center gap-6">
             {[
-              ["About Us", "/about"], ["Jobs", "/jobs"], ["Companies", "/companies"], 
+              ["About Us", "/about"], ["Jobs", "/jobs"], ["Companies", "/companies"],
               ["Courses", "/courses"], ["Blogs", "/blogs"], ["FAQs", "/faqs"], ["Contact", "/contact"]
             ].map(([label, path]) => (
-              <Link key={path} to={path} className={`text-sm font-semibold transition-colors ${isActive(path) ? "text-[#0D2B6E]" : "text-gray-800 hover:text-[#3BAB35]"}`}>
+              <Link key={path} to={path}
+                className={`text-sm font-semibold transition-colors ${
+                  isActive(path) ? "text-[#0D2B6E]" : "text-gray-800 hover:text-[#3BAB35]"
+                }`}>
                 {label}
               </Link>
             ))}
@@ -59,24 +62,47 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <>
+                {/* ── Post Job button — only for employers ── */}
+                {userType === "employer" && (
+                  <Link
+                    to="/employer/post-job"
+                    className={`text-sm font-bold px-5 py-2 rounded-full transition-all ${
+                      isActive("/employer/post-job")
+                        ? "bg-navy-700 text-white"
+                        : "bg-green-500 text-white hover:opacity-90"
+                    }`}
+                  >
+                    + Post Job
+                  </Link>
+                )}
+
+                {/* Logged-in user pill */}
                 <span className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-full px-4 py-1.5 font-medium">
-                  {userType === "employer" ? "🏢" : "👤"} {user?.name || user?.full_name || "Account"}
+                  {userType === "employer" ? "🏢" : "👤"}
+                  {user?.name || user?.full_name || user?.company_name || "Account"}
                 </span>
-                <button onClick={handleLogout} className="text-sm font-semibold text-gray-700 border border-gray-300 bg-white rounded-full px-5 py-2 hover:bg-gray-50 transition-all">
+
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-semibold text-gray-700 border border-gray-300 bg-white rounded-full px-5 py-2 hover:bg-gray-50 transition-all"
+                >
                   Logout
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" className="text-sm font-semibold text-[#0D2B6E] border border-[#0D2B6E] rounded-full px-6 py-2 hover:bg-blue-50 transition-all">
+                <Link to="/login"
+                  className="text-sm font-semibold text-[#0D2B6E] border border-[#0D2B6E] rounded-full px-6 py-2 hover:bg-blue-50 transition-all">
                   Jobseeker
                 </Link>
-                <Link to="/register" className="text-sm font-semibold text-[#0D2B6E] border border-[#0D2B6E] rounded-full px-6 py-2 hover:bg-blue-50 transition-all">
+                <Link to="/register"
+                  className="text-sm font-semibold text-[#0D2B6E] border border-[#0D2B6E] rounded-full px-6 py-2 hover:bg-blue-50 transition-all">
                   Employer
                 </Link>
               </>
             )}
           </div>
+
         </div>
       </nav>
     </header>

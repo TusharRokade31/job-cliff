@@ -22,6 +22,11 @@ router.get("/courses", async (req, res) => {
   res.json(data);
 });
 
+router.get("/blogs", async (req, res) => {
+  const { data } = await axios.get(`${BASE}/blogs`, { params: req.query });
+  res.json(data);
+});
+
 // ── GET /api/common/trainers ──────────────────────────────
 router.get("/trainers", async (_req, res) => {
   const { data } = await axios.get(`${BASE}/common/all_instructor`);

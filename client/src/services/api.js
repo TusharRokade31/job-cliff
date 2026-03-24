@@ -51,5 +51,6 @@ export const getEmployerJobs=(id)     => api.get(`/employers/${id}/jobs/all`);
 export const getBanners    = ()       => api.get("/common/banners");
 export const getCourses    = (params) => api.get("/common/courses", { params });
 export const getTrainers   = ()       => api.get("/common/trainers");
+export const getBlogs      = (params) => api.get("/common/blogs", { params }); // Added Blogs API
 
 export default api;
