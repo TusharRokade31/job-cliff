@@ -3,91 +3,82 @@ import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { isLoggedIn, user, userType, logout } = useAuth();
-  const navigate  = useNavigate();
-  const location  = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const isActive = (path) => location.pathname === path;
   const handleLogout = () => { logout(); navigate("/"); };
 
   return (
-    <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "#fff", borderBottom: "1px solid #e2eaf8" }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", height: 64, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-
-        {/* Logo image */}
-        <Link to="/" style={{ display: "flex", alignItems: "center" }}>
-          <img
-            src="/jobclif.webp"
-            alt="JobCliff"
-            style={{ height: 40, width: "auto", objectFit: "contain" }}
-            onError={(e) => {
-              // fallback to text if logo not found
-              e.target.style.display = "none";
-              e.target.nextSibling.style.display = "inline";
-            }}
-          />
-          <span style={{ display: "none", fontFamily: "'Bricolage Grotesque', sans-serif", fontWeight: 800, fontSize: "1.4rem" }}>
-            <span style={{ color: "#0D2B6E" }}>job</span><span style={{ color: "#3BAB35" }}>cliff</span>
-          </span>
-        </Link>
-
-        {/* Nav links */}
-        <div style={{ display: "flex", gap: 4 }}>
-          {[["Home", "/"], ["Browse Jobs", "/jobs"]].map(([label, path]) => (
-            <Link key={path} to={path} style={{
-              padding: "8px 16px",
-              borderRadius: 12,
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              color: isActive(path) ? "#0D2B6E" : "#6b7280",
-              background: isActive(path) ? "#edf2fb" : "transparent",
-              transition: "all 0.15s",
-            }}>
-              {label}
-            </Link>
-          ))}
-        </div>
-
-        {/* Auth actions */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {isLoggedIn ? (
-            <>
-              <span style={{
-                display: "flex", alignItems: "center", gap: 8,
-                fontSize: "0.82rem", color: "#4b5563",
-                background: "#edf2fb", border: "1px solid #d0dff5",
-                borderRadius: 99, padding: "6px 14px",
-              }}>
-                {userType === "employer" ? "🏢" : "👤"}
-                {user?.name || user?.full_name || "Account"}
-              </span>
-              <button onClick={handleLogout} style={{
-                fontSize: "0.82rem", fontWeight: 600,
-                color: "#374151", border: "1px solid #d1d5db",
-                background: "#fff", borderRadius: 10,
-                padding: "8px 16px", cursor: "pointer",
-                transition: "all 0.15s",
-              }}>
-                Logout
-              </button>
-            </>
-          ) : (
-            <>
-              <Link to="/login" style={{ fontSize: "0.875rem", fontWeight: 600, color: "#0D2B6E" }}>
-                Login
-              </Link>
-              <Link to="/register" style={{
-                fontSize: "0.875rem", fontWeight: 700,
-                background: "#3BAB35", color: "#fff",
-                borderRadius: 10, padding: "9px 20px",
-                boxShadow: "0 2px 8px rgba(59,171,53,0.2)",
-                transition: "all 0.15s",
-              }}>
-                Sign Up
-              </Link>
-            </>
-          )}
-        </div>
+    <header className="w-full font-sans sticky top-0 z-50 bg-white">
+      {/* Top Green Banner */}
+      <div className="bg-[#1ea164] text-white text-xs py-1.5 px-6 flex justify-between md:justify-end items-center gap-6">
+        <span>Empowering Future Citizens with Essential Life Skills</span>
+        <select className="bg-white text-gray-800 text-xs px-2 py-0.5 rounded outline-none border-none cursor-pointer">
+          <option>English</option>
+        </select>
       </div>
-    </nav>
+
+      {/* Main Navbar */}
+      <nav className="border-b border-gray-100 shadow-sm">
+        <div className="max-w-[1400px] mx-auto px-6 h-20 flex items-center justify-between">
+          
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2">
+            <img
+              src="/jobclif.webp"
+              alt="JobCliff"
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                e.target.style.display = "none";
+                e.target.nextSibling.style.display = "flex";
+              }}
+            />
+            <div className="hidden flex-col">
+              <span className="font-extrabold text-xl tracking-tight leading-none">
+                <span className="text-[#0D2B6E]">job</span>
+                <span className="text-[#3BAB35]">cliff</span>
+              </span>
+              <span className="text-[0.6rem] text-gray-500 uppercase tracking-widest mt-0.5">A Not for Profit Initiative</span>
+            </div>
+          </Link>
+
+          {/* Nav Links (Desktop) */}
+          <div className="hidden lg:flex items-center gap-6">
+            {[
+              ["About Us", "/about"], ["Jobs", "/jobs"], ["Companies", "/companies"], 
+              ["Courses", "/courses"], ["Blogs", "/blogs"], ["FAQs", "/faqs"], ["Contact", "/contact"]
+            ].map(([label, path]) => (
+              <Link key={path} to={path} className={`text-sm font-semibold transition-colors ${isActive(path) ? "text-[#0D2B6E]" : "text-gray-800 hover:text-[#3BAB35]"}`}>
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          {/* Auth / Action Buttons */}
+          <div className="flex items-center gap-3">
+            {isLoggedIn ? (
+              <>
+                <span className="flex items-center gap-2 text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-full px-4 py-1.5 font-medium">
+                  {userType === "employer" ? "🏢" : "👤"} {user?.name || user?.full_name || "Account"}
+                </span>
+                <button onClick={handleLogout} className="text-sm font-semibold text-gray-700 border border-gray-300 bg-white rounded-full px-5 py-2 hover:bg-gray-50 transition-all">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-sm font-semibold text-[#0D2B6E] border border-[#0D2B6E] rounded-full px-6 py-2 hover:bg-blue-50 transition-all">
+                  Jobseeker
+                </Link>
+                <Link to="/register" className="text-sm font-semibold text-[#0D2B6E] border border-[#0D2B6E] rounded-full px-6 py-2 hover:bg-blue-50 transition-all">
+                  Employer
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </nav>
+    </header>
   );
 }

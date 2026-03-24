@@ -61,6 +61,28 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ success: false, message: err.message || "Internal server error" });
 });
 
+app.get("/test-email", async (req, res) => {
+  const { sendJobAlertToEmployee } = require("./services/netcore");
+  try {
+    const result = await sendJobAlertToEmployee(
+      {
+        title: "Frontend Developer",
+        company_name: "Job Cliff",
+        job_location: "Mumbai",
+        job_type: "Full-time",
+        salary_range: "₹8–12 LPA",
+        skills: ["React", "Node.js"],
+        _id: "test123",
+      },
+      "rokadetushar122@gmail.com",   // ← your own email to test
+      "Tushar Rokade"
+    );
+    res.json({ success: true, result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Start ─────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`\n🚀  Job Cliff Server running at http://localhost:${PORT}`);

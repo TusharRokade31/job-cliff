@@ -5,99 +5,99 @@ import { useAuth } from "../context/AuthContext";
 
 export default function JobCard({ job }) {
   const { isLoggedIn } = useAuth();
-  const [saved,  setSaved]  = useState(job.is_saved || false);
-  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(job.is_saved || false);
   const [imgErr, setImgErr] = useState(false);
 
-  const id       = job._id || job.id;
-  const title    = job.title || job.job_title || "Untitled Role";
-  const company  = job.company_name || job.employer?.organization_name || job.employer_name || job.company || "Company";
+  const id = job._id || job.id;
+  const title = job.title || job.job_title || "Untitled Role";
+  const company = job.company_name || job.employer?.organization_name || job.employer_name || job.company || "Company";
   const location = job.job_location || job.location || "Remote";
-  const type     = job.job_type || job.employment_type || job.type || "Full-time";
-  const skills   = Array.isArray(job.skills) ? job.skills.slice(0, 3)
-                  : Array.isArray(job.jobSkills) ? job.jobSkills.slice(0, 3).map(s => s.skill_name)
-                  : [];
-  const salary   = job.salary_range || job.salary || null;
-  const posted   = job.created_at
+  const type = job.job_type || job.employment_type || job.type || "Full Time";
+  const salary = job.salary_range || job.salary || "Not specified";
+  const desc = job.description || job.desc || "We are looking for a skilled professional to join our team. The candidate should be passionate and driven with the ability to deliver high-quality work...";
+  
+  const posted = job.created_at
     ? new Date(job.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
-    : job.postedDate || "";
-  const logo     = job.company_logo || job.employer?.logo_url || job.logo || null;
+    : job.posted || "4 days ago";
+    
+  const logo = job.company_logo || job.employer?.logo_url || job.logo || null;
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!isLoggedIn || saving) return;
-    setSaving(true);
+    if (!isLoggedIn) return;
     try {
       if (saved) { await unsaveJob(id); setSaved(false); }
-      else        { await saveJob(id);   setSaved(true);  }
+      else { await saveJob(id); setSaved(true); }
     } catch { /* silent */ }
-    setSaving(false);
   };
 
   return (
-    <Link to={`/jobs/${id}`} className="block group">
-      <div className="bg-white rounded-2xl border border-blue-100 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-200 p-5 flex flex-col gap-3 h-full">
-
-        {/* Top row */}
-        <div className="flex justify-between items-start">
-          <div className="w-11 h-11 rounded-xl bg-brand-navy-lt border border-blue-100 overflow-hidden flex items-center justify-center flex-shrink-0">
-            {logo && !imgErr
-              ? <img src={logo} alt={company} className="w-full h-full object-cover" onError={() => setImgErr(true)} />
-              : <span className="font-display font-bold text-lg text-navy-700">{(company)[0]?.toUpperCase()}</span>
-            }
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wider bg-brand-green-lt text-brand-green border border-brand-green-md rounded-full px-3 py-1">
-              {type}
-            </span>
-            {posted && <span className="text-xs text-gray-400">{posted}</span>}
-          </div>
-        </div>
-
-        {/* Title + company */}
-        <div>
-          <h3 className="font-display font-bold text-navy-700 text-base leading-snug group-hover:text-brand-green transition-colors">
-            {title}
-          </h3>
-          <p className="text-sm text-gray-500 mt-0.5">{company}</p>
-        </div>
-
-        {/* Location + salary */}
-        <div className="flex flex-wrap gap-2">
-          <span className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-full px-3 py-1">
-            📍 {location}
-          </span>
-          {salary && (
-            <span className="text-xs text-gray-500 bg-blue-50 border border-blue-100 rounded-full px-3 py-1">
-              💰 {salary}
-            </span>
+    <div className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow p-5 flex flex-col h-full relative">
+      
+      {/* Header: Logo, Title, Company */}
+      <div className="flex items-start gap-4 mb-4">
+        <div className="w-12 h-12 rounded bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+          {logo && !imgErr ? (
+            <img src={logo} alt={company} className="w-full h-full object-contain p-1" onError={() => setImgErr(true)} />
+          ) : (
+            <span className="font-bold text-xl text-[#0D2B6E]">{(company)[0]?.toUpperCase()}</span>
           )}
         </div>
-
-        {/* Skills */}
-        {skills.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {skills.map((s) => (
-              <span key={s} className="text-xs text-navy-600 bg-brand-navy-lt border border-blue-100 rounded-full px-2.5 py-0.5">
-                {s}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="flex justify-between items-center mt-auto pt-3 border-t border-blue-50">
-          <span className="text-xs font-bold text-brand-green group-hover:underline">View Details →</span>
-          {isLoggedIn && (
-            <button
-              onClick={handleSave}
-              className={`text-lg px-2 py-1 transition-colors ${saved ? "text-red-500" : "text-gray-300 hover:text-red-400"}`}
-              title={saved ? "Unsave" : "Save job"}>
-              {saved ? "♥" : "♡"}
-            </button>
-          )}
+        <div className="flex-1 min-w-0 pt-0.5">
+          <Link to={`/jobs/${id}`} className="block group">
+            <h3 className="font-bold text-gray-900 text-base leading-tight truncate group-hover:text-[#3BAB35] transition-colors">
+              {title}
+            </h3>
+            <p className="text-sm text-gray-500 mt-0.5 truncate">{company}</p>
+          </Link>
         </div>
       </div>
-    </Link>
+
+      {/* Tags: Location, Type, Salary */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3BAB35] bg-[#eefaf2] rounded-full px-3 py-1">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          {location}
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3BAB35] bg-[#eefaf2] rounded-full px-3 py-1">
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          {type}
+        </span>
+        {salary !== "Not specified" && (
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#3BAB35] bg-[#eefaf2] rounded-full px-3 py-1">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            {salary}
+          </span>
+        )}
+      </div>
+
+      {/* Posted info & Description */}
+      <div className="mb-4 flex-1">
+        <p className="text-[11px] text-gray-400 mb-2 font-medium">Posted {posted}</p>
+        <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed" dangerouslySetInnerHTML={{ __html: desc }}/>
+          {/* {desc} */}
+        {/* </p> */}
+        {/* <div className="rich-text"  /> */}
+      </div>
+
+      {/* Footer Actions */}
+      <div className="flex items-center gap-2 mt-auto">
+        <Link to={`/jobs/${id}`} className="flex-1 bg-[#6ebe49] hover:bg-[#5aa838] text-white text-center text-sm font-semibold rounded-full py-2.5 transition-colors shadow-sm">
+          Apply Now
+        </Link>
+        <button className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors font-semibold text-sm flex-shrink-0">
+         <svg className="w-5 h-5" fill={saved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z"></path>
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+</svg>
+        </button>
+        <button 
+          onClick={handleSave} 
+          className={`w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center transition-colors flex-shrink-0 ${saved ? "text-red-500 bg-red-50 border-red-100" : "text-gray-400 hover:bg-gray-50"}`}
+        >
+          <svg className="w-5 h-5" fill={saved ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+        </button>
+      </div>
+    </div>
   );
 }

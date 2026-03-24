@@ -1,8 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getJobById, applyToJob, saveJob, unsaveJob, getSaveStatus } from "../services/api";
 import { useAuth } from "../context/AuthContext";
-import JobCard from "../components/JobCard";
 
 export default function JobDetails() {
   const { jobId } = useParams();
@@ -17,6 +16,9 @@ export default function JobDetails() {
   const [applied,    setApplied]    = useState(false);
   const [msg,        setMsg]        = useState(null);
   const [logoErr,    setLogoErr]    = useState(false);
+
+  // Ref for the Similar Jobs Carousel
+  const carouselRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -57,8 +59,18 @@ export default function JobDetails() {
     if (!isLoggedIn) return navigate("/login");
     try {
       if (saved) { await unsaveJob(jobId); setSaved(false); }
-      else        { await saveJob(jobId);   setSaved(true);  }
+      else       { await saveJob(jobId);   setSaved(true);  }
     } catch {}
+  };
+
+  const scrollCarousel = (direction) => {
+    if (carouselRef.current) {
+      const scrollAmount = 340; // Approx card width + gap
+      carouselRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth"
+      });
+    }
   };
 
   if (loading) return (
@@ -251,7 +263,7 @@ export default function JobDetails() {
               <button
                 onClick={handleApply}
                 disabled={applying || applied}
-                className="w-full bg-brand-green text-white font-display font-bold py-3 rounded-xl hover:bg-green-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
+                className="w-full bg-green-700 text-white font-display font-bold py-3 rounded-xl hover:bg-green-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed">
                 {applied ? "✓ Applied" : applying ? "Submitting…" : "Apply Now"}
               </button>
 
@@ -297,23 +309,80 @@ export default function JobDetails() {
           </aside>
         </div>
 
-        {/* Similar Jobs */}
-        {similar.length > 0 && (
-          <section className="mt-14">
-            <h2 className="font-display font-bold text-2xl text-navy-700 mb-6">Similar Jobs</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {similar.slice(0, 4).map((job) => (
-                <JobCard key={job.id || job._id} job={job} />
-              ))}
-            </div>
-          </section>
-        )}
-
       </div>
+
+      {/* ── Match the UI exactly for Similar Jobs  ──────────────────────── */}
+      {similar.length > 0 && (
+        <section className="bg-[#f9fafd] mt-20 py-12 border-t border-gray-100">
+          <div className="max-w-6xl mx-auto px-6">
+            
+            {/* Header section matching the image exactly */}
+            <div className="text-center mb-10">
+              <h2 className="font-display font-bold text-3xl text-black">
+                Similar <span className="text-blue-900">Job Openings</span>
+              </h2>
+              <p className="text-sm text-gray-500 mt-3 max-w-2xl mx-auto leading-relaxed">
+                Gain the skills, support, and opportunities you need to build a stable, dignified career — all through Vedanta's employment and training initiatives.
+              </p>
+            </div>
+
+            {/* Carousel Container */}
+            <div className="relative">
+              <div 
+                ref={carouselRef}
+                className="flex gap-6 overflow-x-auto snap-x snap-mandatory scrollbar-hide pb-4"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
+                {similar.map((job) => (
+                  <SimilarJobCard key={job.id || job._id} job={job} />
+                ))}
+              </div>
+
+              {/* Carousel Controls */}
+              <div className="flex justify-center items-center gap-3 mt-4">
+                <button 
+                  onClick={() => scrollCarousel("left")}
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                  </svg>
+                </button>
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                <div className="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                <button 
+                  onClick={() => scrollCarousel("right")}
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom Call to Action Box */}
+            <div className="mt-14 bg-[#edf4fd] rounded-2xl p-8 flex flex-col items-center justify-center border border-blue-100 shadow-sm">
+              <h3 className="font-bold text-navy-800 text-xl mb-6">
+                Looking For More Such <span className="text-blue-500">Similar Opportunities?</span>
+              </h3>
+              <Link to="/register" className="bg-[#1067b4] text-white px-8 py-2.5 rounded-full font-semibold flex items-center gap-2 hover:bg-blue-700 transition-colors shadow-md text-sm">
+                Sign Up 
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-3.5 h-3.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </Link>
+            </div>
+
+          </div>
+        </section>
+      )}
+
     </main>
   );
 }
 
+// Helper Components
 function Section({ title, children }) {
   return (
     <div className="bg-white rounded-2xl border border-blue-100 shadow-card p-6">
@@ -329,4 +398,70 @@ function MetaChip({ children, className = "" }) {
       {children}
     </span>
   );
-} 
+}
+
+// Custom Job Card specifically crafted to match the Exact screenshot
+function SimilarJobCard({ job }) {
+  // Strip HTML from description for a clean snippet
+  const snippet = job.description?.replace(/<[^>]*>?/gm, '') || "";
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-[20px] p-5 w-[330px] flex flex-col flex-shrink-0 snap-center shadow-sm hover:shadow-md transition-all">
+      {/* Top Header: Logo, Title, Company */}
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-12 h-12 rounded-xl bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center flex-shrink-0">
+          {job.logo ? (
+            <img src={job.logo} alt={job.company} className="w-full h-full object-contain p-1" />
+          ) : (
+            <span className="font-bold text-gray-400">{job.company?.charAt(0)}</span>
+          )}
+        </div>
+        <div>
+          <h3 className="font-bold text-gray-900 text-sm line-clamp-1">{job.title}</h3>
+          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{job.company}</p>
+        </div>
+      </div>
+
+      {/* Badges Layout (Matching the green theme from the image) */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {job.location && (
+           <span className="bg-[#eef8f2] text-[#429555] text-[10px] font-semibold px-2 py-1 rounded flex items-center gap-1">
+             📍 {job.location}
+           </span>
+        )}
+        {job.type && (
+           <span className="bg-[#eef8f2] text-[#429555] text-[10px] font-semibold px-2 py-1 rounded flex items-center gap-1">
+             ⏱ {job.type}
+           </span>
+        )}
+        {job.salary && (
+           <span className="bg-[#eef8f2] text-[#429555] text-[10px] font-semibold px-2 py-1 rounded flex items-center gap-1">
+             💰 {job.salary}
+           </span>
+        )}
+      </div>
+
+      <p className="text-[10px] text-gray-400 mb-2 font-medium">{job.postedDate || "Recently posted"}</p>
+
+      {/* Description Snippet */}
+      <p className="text-xs text-gray-600 line-clamp-2 mb-5 flex-1 leading-relaxed">
+        {snippet}
+      </p>
+
+      {/* Footer Buttons */}
+      <div className="flex items-center gap-2 mt-auto">
+        <Link 
+          to={`/jobs/${job.id}`} 
+          className="flex-1 bg-[#61b846] text-white text-center text-sm font-bold py-2.5 rounded-full hover:bg-green-700 transition-colors"
+        >
+          Apply Now
+        </Link>
+        <button className="w-[42px] h-[42px] flex items-center justify-center border border-gray-200 rounded-full text-gray-400 hover:text-red-500 hover:border-red-200 transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
